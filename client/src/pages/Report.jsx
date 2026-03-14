@@ -1,26 +1,64 @@
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { sessionService } from "../services/sessionService";
+import { useSessionStore } from "../stores/sessionStore";
+import SessionReport from "../components/session/SessionReport";
+import Button from "../components/ui/Button";
+import Skeleton from "../components/ui/Skeleton";
 
-/**
- * Report — post-session AI coaching report.
- */
 export default function Report() {
   const { sessionId } = useParams();
+  const navigate = useNavigate();
+  const resetSession = useSessionStore((s) => s.resetSession);
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // TODO: fetch report from GET /api/session/report/:id
-  // TODO: render SessionReport component
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchReport() {
+      try {
+        const { data } = await sessionService.getReport(sessionId);
+        if (!cancelled) setReport(data);
+      } catch {
+        // Mock may not find report — that's ok
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    fetchReport();
+    return () => { cancelled = true; };
+  }, [sessionId]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-4">
+        <Skeleton height={40} className="w-48 mx-auto" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} height={80} className="rounded-xl" />
+          ))}
+        </div>
+        <Skeleton height={220} className="rounded-xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-semibold text-surface-800">
-        Session Report
-      </h1>
-      <p className="mt-2 text-sm text-surface-400">
-        Session: {sessionId}
-      </p>
+      <SessionReport report={report} />
 
-      {/* TODO: SessionReport component */}
-      <div className="mt-6 rounded-xl border border-surface-200 bg-white p-6">
-        <p className="text-sm text-surface-400">AI report coming soon...</p>
+      <div className="mt-8 flex items-center justify-center gap-3">
+        <Button
+          onClick={() => {
+            resetSession();
+            navigate("/");
+          }}
+        >
+          Start New Session
+        </Button>
+        <Button variant="secondary" onClick={() => navigate("/dashboard")}>
+          View Dashboard
+        </Button>
       </div>
     </div>
   );

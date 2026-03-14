@@ -2,11 +2,8 @@ import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { useUIStore } from "../../stores/uiStore";
+import { ToastContainer } from "../ui/Toast";
 
-/**
- * PageWrapper — root layout wrapping all routed pages.
- * Provides Navbar, optional Sidebar, and main content area.
- */
 export default function PageWrapper() {
   const sidebarOpen = useUIStore((s) => s.sidebarOpen);
 
@@ -19,6 +16,7 @@ export default function PageWrapper() {
           <Outlet />
         </main>
       </div>
+      <ToastContainer />
     </div>
   );
 }
