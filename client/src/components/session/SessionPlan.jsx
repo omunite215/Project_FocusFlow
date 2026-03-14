@@ -6,7 +6,7 @@ export default function SessionPlan({ plan, currentBlock = 0 }) {
 
   if (!plan) return null;
 
-  const { blocks, reasoning, total_minutes } = plan;
+  const { blocks, strategy_notes, total_study_min } = plan;
 
   return (
     <Card padding="sm">
@@ -15,7 +15,7 @@ export default function SessionPlan({ plan, currentBlock = 0 }) {
           Session Plan
         </h3>
         <span className="text-xs text-surface-400">
-          {total_minutes} min total
+          {total_study_min} min total
         </span>
       </div>
 
@@ -67,7 +67,7 @@ export default function SessionPlan({ plan, currentBlock = 0 }) {
                   {block.subject}
                 </p>
                 <p className="text-xs text-surface-400">
-                  {block.duration_minutes}m &middot; {block.method}
+                  {block.duration_min}m &middot; {block.study_method}
                 </p>
               </div>
               {isCurrent && (
@@ -80,7 +80,7 @@ export default function SessionPlan({ plan, currentBlock = 0 }) {
         })}
       </div>
 
-      {reasoning && (
+      {strategy_notes && (
         <div className="mt-3 border-t border-surface-100 pt-3">
           <button
             onClick={() => setShowReasoning(!showReasoning)}
@@ -104,7 +104,7 @@ export default function SessionPlan({ plan, currentBlock = 0 }) {
           </button>
           {showReasoning && (
             <p className="mt-2 rounded-lg bg-surface-50 px-3 py-2 text-xs leading-relaxed text-surface-500">
-              {reasoning}
+              {strategy_notes}
             </p>
           )}
         </div>

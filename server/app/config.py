@@ -1,23 +1,36 @@
-"""FocusFlow — Application settings via pydantic-settings."""
+"""Application configuration via pydantic-settings. All secrets from env vars."""
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Environment-based configuration. Never hardcode secrets."""
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
+    # Groq
     groq_api_key: str = ""
-    database_url: str = "sqlite:///./focusflow.db"
+
+    # Database
+    database_url: str = "sqlite+aiosqlite:///./focusflow.db"
+
+    # ChromaDB
     chroma_persist_dir: str = "./chroma_data"
+
+    # Embedding model
     embedding_model: str = "all-MiniLM-L6-v2"
-    cors_origins: str = "http://localhost:5173,https://focusflow.vercel.app"
+
+    # CORS
+    cors_origins: str = "http://localhost:5173"
+
+    # Environment
     env: str = "development"
 
     @property
-    def cors_origins_list(self) -> list[str]:
+    def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",")]
-
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
 settings = Settings()

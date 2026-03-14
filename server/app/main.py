@@ -1,4 +1,4 @@
-"""FocusFlow — FastAPI application entry point."""
+"""FocusFlow FastAPI application entry point."""
 
 from contextlib import asynccontextmanager
 
@@ -6,42 +6,53 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.database import init_db
+from app.rag.ingest import ingest_knowledge_base
+from app.rag.pipeline import init_rag
+from app.routes import dashboard, medications, profile, session
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
-    # TODO: initialize ChromaDB, load RAG pipeline
-    print("FocusFlow backend starting...")
+    # Startup: create database tables
+    await init_db()
+    print("[OK] Database initialized")
+
+    # Startup: initialize RAG pipeline and ingest knowledge base
+    client = init_rag()
+    ingest_knowledge_base(client)
+    print("[OK] RAG pipeline initialized")
+
     yield
-    print("FocusFlow backend shutting down...")
+    # Shutdown: cleanup if needed
+    print("[INFO] Shutting down FocusFlow")
 
 
 app = FastAPI(
     title="FocusFlow API",
     description="AI-Powered Adaptive Study Session Manager for Neurodiverse Students",
-    version="0.1.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
-# CORS — configured early per lessons.md rule [CORS]
+# CORS — configured early per lessons rule [CORS]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Register routers
+app.include_router(profile.router)
+app.include_router(session.router)
+app.include_router(dashboard.router)
+app.include_router(medications.router)
+
 
 @app.get("/api/health")
-async def health_check():
-    return {"status": "ok", "service": "focusflow"}
-
-
-# TODO: include route routers
-# from app.routes import profile, session, dashboard, medications
-# app.include_router(profile.router, prefix="/api")
-# app.include_router(session.router, prefix="/api")
-# app.include_router(dashboard.router, prefix="/api")
-# app.include_router(medications.router, prefix="/api")
+async def health_check() -> dict:
+    """Health check endpoint for Render and monitoring."""
+    return {"status": "healthy", "service": "focusflow-api"}

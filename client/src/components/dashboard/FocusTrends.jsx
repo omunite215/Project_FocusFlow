@@ -18,6 +18,9 @@ function CustomTooltip({ active, payload }) {
       <p className="text-xs text-surface-500">
         Avg Focus: <span className="font-medium">{data.avg.toFixed(1)}</span>
       </p>
+      {data.subjects && (
+        <p className="text-xs text-surface-400">{data.subjects.join(", ")}</p>
+      )}
     </div>
   );
 }
@@ -25,13 +28,20 @@ function CustomTooltip({ active, payload }) {
 export default function FocusTrends({ data = [] }) {
   if (data.length === 0) return null;
 
+  // Transform backend focus_trend to chart format
+  const chartData = data.map((d) => ({
+    day: new Date(d.date).toLocaleDateString([], { weekday: "short" }),
+    avg: d.average_focus,
+    subjects: d.subjects,
+  }));
+
   return (
     <Card>
       <h3 className="mb-4 text-sm font-semibold text-surface-800">
         Focus Trends — This Week
       </h3>
       <ResponsiveContainer width="100%" height={240}>
-        <AreaChart data={data} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+        <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
           <defs>
             <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />

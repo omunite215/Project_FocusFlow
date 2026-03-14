@@ -5,6 +5,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Cell,
 } from "recharts";
 import Card from "../ui/Card";
 
@@ -25,7 +26,10 @@ function CustomTooltip({ active, payload }) {
         Hours: <span className="font-medium">{data.hours}</span>
       </p>
       <p className="text-xs text-surface-500">
-        Avg Focus: <span className="font-medium">{data.avg_focus.toFixed(1)}</span>
+        Avg Focus: <span className="font-medium">{data.average_focus.toFixed(1)}</span>
+      </p>
+      <p className="text-xs text-surface-400">
+        {data.session_count} sessions
       </p>
     </div>
   );
@@ -34,9 +38,13 @@ function CustomTooltip({ active, payload }) {
 export default function SubjectBreakdown({ data = [] }) {
   if (data.length === 0) return null;
 
+  // Transform backend subject_averages to chart format
   const chartData = data.map((d) => ({
-    ...d,
-    fill: getBarColor(d.avg_focus),
+    subject: d.subject,
+    hours: Math.round((d.total_minutes / 60) * 10) / 10,
+    average_focus: d.average_focus,
+    session_count: d.session_count,
+    fill: getBarColor(d.average_focus),
   }));
 
   return (
@@ -70,10 +78,9 @@ export default function SubjectBreakdown({ data = [] }) {
             dataKey="hours"
             radius={[0, 6, 6, 0]}
             barSize={24}
-            fill="#6366f1"
           >
             {chartData.map((entry, i) => (
-              <rect key={i} fill={entry.fill} />
+              <Cell key={i} fill={entry.fill} />
             ))}
           </Bar>
         </BarChart>

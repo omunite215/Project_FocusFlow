@@ -41,7 +41,7 @@ export default function ActiveSession() {
     if (!plan?.blocks) return;
     let cumulative = 0;
     for (let i = 0; i < plan.blocks.length; i++) {
-      cumulative += plan.blocks[i].duration_minutes * 60;
+      cumulative += plan.blocks[i].duration_min * 60;
       if (elapsedSeconds < cumulative) {
         if (i !== currentBlock) setCurrentBlock(i);
         break;
@@ -65,7 +65,7 @@ export default function ActiveSession() {
     async (focusLevel) => {
       const currentSubject = plan?.blocks?.[currentBlock]?.subject || "";
       try {
-        const data = await submitCheckIn(focusLevel, currentBlock, currentSubject);
+        const data = await submitCheckIn(focusLevel, currentBlock + 1, currentSubject);
         setShowCheckIn(false);
         setLastCheckInAt(elapsedSeconds);
         addToast({ type: "info", message: "Check-in recorded." });

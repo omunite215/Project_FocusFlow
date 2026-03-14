@@ -1,26 +1,28 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
-
-# Build
-client/dist/
-*.pyc
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
 *.egg-info/
+build/
+.eggs/
 
-# Environment
-.env
-.env.local
-.env.production
+# Virtual environments
+venv/
+.venv/
+env/
 
 # Database
 *.db
 *.sqlite3
-focusflow.db
 
-# Vector store
+# ChromaDB
 chroma_data/
+
+# Environment variables
+.env
+.env.local
+.env.production
 
 # IDE
 .vscode/
@@ -32,13 +34,20 @@ chroma_data/
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-npm-debug.log*
-
-# Testing
-coverage/
-.pytest_cache/
+# Node (client)
+node_modules/
+client/dist/
+client/.vite/
 
 # Bun
 bun.lockb
+
+# Logs
+*.log
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+.pytest_cache/
+coverage/

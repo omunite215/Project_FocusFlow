@@ -1,33 +1,38 @@
-"""FocusFlow — Database connection and session factory (SQLAlchemy 2.0)."""
+"""SQLAlchemy 2.0 async engine, session factory, and Base class."""
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
 
-engine = create_engine(
+engine = create_async_engine(
     settings.database_url,
-    connect_args={"check_same_thread": False},  # SQLite-specific
     echo=settings.env == "development",
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+async_session_factory = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
 
 
 class Base(DeclarativeBase):
-    """Base class for all ORM models."""
     pass
 
 
-def get_db():
-    """Dependency injection for FastAPI route handlers."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncSession:
+    """FastAPI dependency that yields an async DB session."""
+    async with async_session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
-def create_tables():
-    """Create all tables. Called during app startup."""
-    Base.metadata.create_all(bind=engine)
+async def init_db() -> None:
+    """Create all tables on startup."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

@@ -1,10 +1,9 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Button from "../ui/Button";
 
 export default function AdaptationAlert({ suggestion, onDismiss, onAccept }) {
-  const [showReasoning, setShowReasoning] = useState(false);
   const ref = useRef(null);
 
   useGSAP(
@@ -54,34 +53,16 @@ export default function AdaptationAlert({ suggestion, onDismiss, onAccept }) {
         </div>
       </div>
 
-      {suggestion.reasoning && (
-        <div className="mb-3 ml-11">
-          <button
-            onClick={() => setShowReasoning(!showReasoning)}
-            className="flex items-center gap-1 text-xs font-medium text-surface-400 transition-colors hover:text-surface-600"
-            aria-expanded={showReasoning}
-          >
-            <svg
-              className={`h-3 w-3 transition-transform ${showReasoning ? "rotate-90" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-            Why this suggestion?
-          </button>
-          {showReasoning && (
-            <p className="mt-1.5 rounded-lg bg-white/60 px-3 py-2 text-xs leading-relaxed text-surface-500">
-              {suggestion.reasoning}
-            </p>
-          )}
-        </div>
+      {suggestion.new_method && (
+        <p className="mb-3 ml-11 text-xs text-surface-500">
+          Suggested method: <span className="font-medium text-surface-700">{suggestion.new_method}</span>
+        </p>
+      )}
+
+      {suggestion.break_duration_min && (
+        <p className="mb-3 ml-11 text-xs text-surface-500">
+          Break duration: <span className="font-medium text-surface-700">{suggestion.break_duration_min} min</span>
+        </p>
       )}
 
       <div className="flex items-center gap-2 ml-11">

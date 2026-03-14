@@ -1,4 +1,4 @@
-// FocusFlow mock data — mirrors exact API response schemas.
+// FocusFlow mock data — mirrors exact backend API response schemas.
 // Remove mocks/mockService.js import from main.jsx when backend is ready.
 
 export const mockProfile = {
@@ -15,196 +15,150 @@ export const mockProfile = {
   ],
   preferred_study_times: ["morning", "afternoon"],
   energy_pattern: "morning",
+  created_at: "2026-03-14T10:00:00Z",
+  updated_at: "2026-03-14T10:00:00Z",
 };
 
-export const mockSessionPlan = {
+export const mockSessionStart = {
   session_id: "sess-1",
+  started_at: "2026-03-14T10:00:00Z",
   plan: {
-    total_minutes: 90,
     blocks: [
       {
-        subject: "Data Structures",
-        duration_minutes: 30,
-        method: "Active Recall",
         order: 1,
+        subject: "Data Structures",
+        duration_min: 30,
+        study_method: "Active Recall",
+        notes: "Hardest subject first while medication is at peak.",
       },
       {
-        subject: "Calculus II",
-        duration_minutes: 35,
-        method: "Practice Problems",
         order: 2,
+        subject: "Calculus II",
+        duration_min: 35,
+        study_method: "Practice Problems",
+        notes: null,
       },
       {
-        subject: "Intro Psychology",
-        duration_minutes: 25,
-        method: "Summarization",
         order: 3,
+        subject: "Intro Psychology",
+        duration_min: 25,
+        study_method: "Summarization",
+        notes: "Lighter subject for cooldown.",
       },
     ],
-    reasoning:
+    breaks: [
+      { after_block: 1, duration_min: 5, activity: "Stretch or walk" },
+      { after_block: 2, duration_min: 5, activity: "Hydration break" },
+    ],
+    total_study_min: 90,
+    total_break_min: 10,
+    strategy_notes:
       "Starting with Data Structures — your closest deadline and hardest subject — while your medication is at peak effectiveness. Calculus follows during your strong focus window. Ending with Psychology as a lighter cooldown.",
   },
 };
 
 export const mockCheckInResponses = [
-  { adaptation_needed: false, suggestion: null },
-  { adaptation_needed: false, suggestion: null },
-  { adaptation_needed: false, suggestion: null },
-  { adaptation_needed: false, suggestion: null },
+  { checkin_id: 1, adaptation_needed: false, suggestion: null },
+  { checkin_id: 2, adaptation_needed: false, suggestion: null },
+  { checkin_id: 3, adaptation_needed: false, suggestion: null },
+  { checkin_id: 4, adaptation_needed: false, suggestion: null },
   {
+    checkin_id: 5,
     adaptation_needed: true,
     suggestion: {
-      type: "switch_method",
+      action: "change_method",
       message:
         "Your focus has been dipping. Let's try switching things up — a different approach can re-engage your attention.",
-      suggested_method: "Mind Mapping",
-      reasoning:
-        "Research shows switching study modalities can re-engage attention when focus declines. Mind mapping uses spatial reasoning, a different cognitive pathway than practice problems.",
+      new_subject: null,
+      break_duration_min: null,
+      new_method: "Mind Mapping",
     },
   },
   {
+    checkin_id: 6,
     adaptation_needed: true,
     suggestion: {
-      type: "take_break",
+      action: "take_break",
       message:
         "You've been working hard. A 5-minute movement break can reset your focus better than pushing through.",
-      suggested_method: "Movement Break",
-      reasoning:
-        "After sustained low focus, brief physical activity increases dopamine and norepinephrine, improving attention for the next block.",
+      new_subject: null,
+      break_duration_min: 5,
+      new_method: null,
     },
   },
 ];
 
-export const mockSessionReport = {
+export const mockSessionEnd = {
   session_id: "sess-1",
-  duration_minutes: 87,
-  blocks_completed: 3,
-  average_focus: 3.3,
-  peak_focus: 5,
-  total_checkins: 6,
-  focus_curve: [
-    { index: 1, focus: 4, subject: "Data Structures", time: "10:15 AM" },
-    { index: 2, focus: 5, subject: "Data Structures", time: "10:30 AM" },
-    { index: 3, focus: 4, subject: "Calculus II", time: "10:50 AM" },
-    { index: 4, focus: 3, subject: "Calculus II", time: "11:10 AM" },
-    { index: 5, focus: 2, subject: "Intro Psychology", time: "11:25 AM" },
-    { index: 6, focus: 2, subject: "Intro Psychology", time: "11:40 AM" },
-  ],
-  insights: [
-    "You maintained strong focus during Data Structures (avg 4.5) — great work on your hardest subject!",
-    "Focus peaked at check-in #2, about 30 minutes after your medication dose.",
-    "Focus declined during the final subject. Shorter blocks may help next time.",
-  ],
-  suggestions: [
-    "Try 20-minute blocks for late-session subjects instead of 25 minutes.",
-    "Your peak focus window appears to be the first 45 minutes — start with your hardest material there.",
-    "Consider a movement break between subjects to reset your attention.",
-  ],
-  achievements: [
-    "Completed 87 of 90 planned minutes",
-    "Responded to all 6 check-ins",
-    "Tackled your hardest subject first",
-  ],
+  status: "completed",
+  report: {
+    session_id: "sess-1",
+    summary:
+      "You studied for 87 minutes across 3 subjects. Focus was strongest during Data Structures (avg 4.5) and dipped toward the end. Great job tackling your hardest subject first!",
+    total_duration_min: 87,
+    blocks_completed: 3,
+    average_focus: 3.3,
+    peak_focus_time: "10:30 AM",
+    low_focus_time: "11:40 AM",
+    focus_data: [
+      { timestamp: "2026-03-14T10:15:00Z", focus_level: 4, block_number: 1, subject: "Data Structures" },
+      { timestamp: "2026-03-14T10:30:00Z", focus_level: 5, block_number: 1, subject: "Data Structures" },
+      { timestamp: "2026-03-14T10:50:00Z", focus_level: 4, block_number: 2, subject: "Calculus II" },
+      { timestamp: "2026-03-14T11:10:00Z", focus_level: 3, block_number: 2, subject: "Calculus II" },
+      { timestamp: "2026-03-14T11:25:00Z", focus_level: 2, block_number: 3, subject: "Intro Psychology" },
+      { timestamp: "2026-03-14T11:40:00Z", focus_level: 2, block_number: 3, subject: "Intro Psychology" },
+    ],
+    recommendations: [
+      { text: "Try 20-minute blocks for late-session subjects instead of 25 minutes.", category: "timing" },
+      { text: "Your peak focus window is the first 45 minutes — start with your hardest material there.", category: "subject_order" },
+      { text: "Consider a movement break between subjects to reset your attention.", category: "breaks" },
+    ],
+    encouragement:
+      "Nice work! You showed up, tackled your hardest subject first, and responded to every check-in. That's what consistency looks like.",
+  },
 };
+
+export const mockSessionReport = mockSessionEnd.report;
 
 export const mockDashboardData = {
   total_sessions: 12,
-  total_study_hours: 18.5,
+  total_study_minutes: 1110,
   avg_focus: 3.4,
-  current_streak: 3,
-  weekly_focus: [
-    { day: "Mon", avg: 3.8 },
-    { day: "Tue", avg: 3.2 },
-    { day: "Wed", avg: 4.1 },
-    { day: "Thu", avg: 3.5 },
-    { day: "Fri", avg: 2.9 },
-    { day: "Sat", avg: 3.7 },
-    { day: "Sun", avg: 3.6 },
+  focus_trend: [
+    { session_id: "s1", date: "2026-03-08", duration_min: 60, average_focus: 3.8, subjects: ["Data Structures"], status: "completed" },
+    { session_id: "s2", date: "2026-03-09", duration_min: 90, average_focus: 3.2, subjects: ["Calculus II", "Data Structures"], status: "completed" },
+    { session_id: "s3", date: "2026-03-10", duration_min: 75, average_focus: 4.1, subjects: ["Data Structures"], status: "completed" },
+    { session_id: "s4", date: "2026-03-11", duration_min: 45, average_focus: 3.5, subjects: ["Intro Psychology"], status: "completed" },
+    { session_id: "s5", date: "2026-03-12", duration_min: 120, average_focus: 2.9, subjects: ["Calculus II", "Intro Psychology"], status: "completed" },
+    { session_id: "s6", date: "2026-03-13", duration_min: 80, average_focus: 3.7, subjects: ["Data Structures", "Calculus II"], status: "completed" },
+    { session_id: "s7", date: "2026-03-14", duration_min: 87, average_focus: 3.3, subjects: ["Data Structures", "Calculus II", "Intro Psychology"], status: "completed" },
   ],
-  subject_breakdown: [
-    { subject: "Data Structures", hours: 7.2, avg_focus: 3.9 },
-    { subject: "Calculus II", hours: 6.5, avg_focus: 3.2 },
-    { subject: "Intro Psychology", hours: 4.8, avg_focus: 3.1 },
+  best_study_times: [
+    { hour: 9, average_focus: 4.2, session_count: 5 },
+    { hour: 10, average_focus: 4.0, session_count: 8 },
+    { hour: 11, average_focus: 3.5, session_count: 6 },
+    { hour: 14, average_focus: 3.3, session_count: 4 },
+    { hour: 15, average_focus: 3.1, session_count: 3 },
   ],
-  study_heatmap: [
-    { day: "Mon", slot: "Morning", intensity: 0.8 },
-    { day: "Mon", slot: "Afternoon", intensity: 0.5 },
-    { day: "Mon", slot: "Evening", intensity: 0.2 },
-    { day: "Tue", slot: "Morning", intensity: 0.9 },
-    { day: "Tue", slot: "Afternoon", intensity: 0.6 },
-    { day: "Tue", slot: "Evening", intensity: 0.1 },
-    { day: "Wed", slot: "Morning", intensity: 0.7 },
-    { day: "Wed", slot: "Afternoon", intensity: 0.8 },
-    { day: "Wed", slot: "Evening", intensity: 0.3 },
-    { day: "Thu", slot: "Morning", intensity: 0.6 },
-    { day: "Thu", slot: "Afternoon", intensity: 0.4 },
-    { day: "Thu", slot: "Evening", intensity: 0.5 },
-    { day: "Fri", slot: "Morning", intensity: 0.5 },
-    { day: "Fri", slot: "Afternoon", intensity: 0.3 },
-    { day: "Fri", slot: "Evening", intensity: 0.1 },
-    { day: "Sat", slot: "Morning", intensity: 0.4 },
-    { day: "Sat", slot: "Afternoon", intensity: 0.7 },
-    { day: "Sat", slot: "Evening", intensity: 0.2 },
-    { day: "Sun", slot: "Morning", intensity: 0.3 },
-    { day: "Sun", slot: "Afternoon", intensity: 0.5 },
-    { day: "Sun", slot: "Evening", intensity: 0.4 },
+  subject_averages: [
+    { subject: "Data Structures", average_focus: 3.9, total_minutes: 432, session_count: 7 },
+    { subject: "Calculus II", average_focus: 3.2, total_minutes: 390, session_count: 6 },
+    { subject: "Intro Psychology", average_focus: 3.1, total_minutes: 288, session_count: 4 },
   ],
-  medication_correlation: {
-    with_medication: { avg_focus: 4.1, sessions: 8 },
-    without_medication: { avg_focus: 2.9, sessions: 4 },
-  },
 };
 
-export const mockMedicationInfo = [
-  {
-    name: "Adderall XR",
-    type: "Stimulant (mixed amphetamine salts)",
-    onset: "30-60 minutes",
-    peak: "2-3 hours after dose",
-    duration: "10-12 hours",
-    study_tips: [
-      "Schedule your hardest subject 1-2 hours after your dose for peak effectiveness.",
-      "Avoid caffeine for the first 2 hours after taking — it can increase anxiety without improving focus.",
-      "Stay hydrated. Stimulants can cause dehydration, which reduces cognitive performance.",
-    ],
-    interactions: [
-      "Vitamin C and citrus can reduce absorption — take medication on an empty stomach or with non-acidic food.",
-      "Caffeine amplifies stimulant effects. If you drink coffee, reduce your usual amount.",
-    ],
-    source: "ADHD Research & Clinical Guidelines (RAG)",
-  },
-  {
-    name: "Concerta",
-    type: "Stimulant (methylphenidate ER)",
-    onset: "30-60 minutes",
-    peak: "6-8 hours (OROS release system)",
-    duration: "10-12 hours",
-    study_tips: [
-      "Concerta's unique release system means focus stays more consistent throughout the day.",
-      "Best taken in the morning — the extended release covers most study hours.",
-      "If you notice a dip around hour 8, plan lighter review material for that window.",
-    ],
-    interactions: [
-      "Avoid grapefruit juice — it can alter medication metabolism.",
-      "Alcohol reduces effectiveness and increases side effects.",
-    ],
-    source: "ADHD Research & Clinical Guidelines (RAG)",
-  },
-  {
-    name: "Vyvanse",
-    type: "Stimulant (lisdexamfetamine)",
-    onset: "1-2 hours (prodrug conversion)",
-    peak: "3-4 hours after dose",
-    duration: "12-14 hours",
-    study_tips: [
-      "Vyvanse has the smoothest onset — great for morning study sessions without the initial rush.",
-      "Plan your most challenging material for 2-4 hours post-dose.",
-      "The long duration means evening study is still productive, but watch for sleep impact.",
-    ],
-    interactions: [
-      "High-protein meals may slightly delay onset.",
-      "Same vitamin C / citrus caution as other stimulants.",
-    ],
-    source: "ADHD Research & Clinical Guidelines (RAG)",
-  },
-];
+export const mockMedicationResponse = {
+  answer:
+    "Adderall XR is an extended-release mixed amphetamine salt stimulant commonly prescribed for ADHD. It typically reaches peak effectiveness 2-3 hours after ingestion, with effects lasting 10-12 hours. For optimal study performance, schedule your hardest material during the peak window.",
+  study_tips: [
+    "Schedule your hardest subject 1-2 hours after your dose for peak effectiveness.",
+    "Avoid caffeine for the first 2 hours — it can increase anxiety without improving focus.",
+    "Stay hydrated. Stimulants can cause dehydration, which reduces cognitive performance.",
+  ],
+  disclaimer:
+    "This information is for educational purposes only and is not medical advice. Always consult your healthcare provider about medications.",
+  sources_used: [
+    "adhd_cognitive_science.md",
+    "medication_reference.md",
+  ],
+};

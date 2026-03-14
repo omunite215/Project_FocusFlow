@@ -1,11 +1,12 @@
 import api from "../services/api";
 import {
   mockProfile,
-  mockSessionPlan,
+  mockSessionStart,
   mockCheckInResponses,
+  mockSessionEnd,
   mockSessionReport,
   mockDashboardData,
-  mockMedicationInfo,
+  mockMedicationResponse,
 } from "./data";
 
 let checkInCount = 0;
@@ -22,7 +23,12 @@ export function setupMocks() {
     // POST /api/profile
     if (url === "/api/profile" && method === "post") {
       await delay(300);
-      const profile = { id: "user-1", ...body };
+      const profile = {
+        id: "user-1",
+        ...body,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
       return Promise.reject({
         __MOCK__: true,
         response: { data: profile, status: 201 },
@@ -41,7 +47,7 @@ export function setupMocks() {
     // PUT /api/profile/:id
     if (url?.startsWith("/api/profile/") && method === "put") {
       await delay(300);
-      const updated = { ...mockProfile, ...body };
+      const updated = { ...mockProfile, ...body, updated_at: new Date().toISOString() };
       return Promise.reject({
         __MOCK__: true,
         response: { data: updated, status: 200 },
@@ -54,7 +60,7 @@ export function setupMocks() {
       checkInCount = 0;
       return Promise.reject({
         __MOCK__: true,
-        response: { data: mockSessionPlan, status: 200 },
+        response: { data: mockSessionStart, status: 200 },
       });
     }
 
@@ -76,7 +82,7 @@ export function setupMocks() {
       await delay(500);
       return Promise.reject({
         __MOCK__: true,
-        response: { data: { report: mockSessionReport }, status: 200 },
+        response: { data: mockSessionEnd, status: 200 },
       });
     }
 
@@ -101,15 +107,9 @@ export function setupMocks() {
     // GET /api/medications
     if (url?.startsWith("/api/medications") && method === "get") {
       await delay(400);
-      const query = config.params?.q?.toLowerCase() || "";
-      const results = query
-        ? mockMedicationInfo.filter((m) =>
-            m.name.toLowerCase().includes(query)
-          )
-        : mockMedicationInfo;
       return Promise.reject({
         __MOCK__: true,
-        response: { data: results, status: 200 },
+        response: { data: mockMedicationResponse, status: 200 },
       });
     }
 

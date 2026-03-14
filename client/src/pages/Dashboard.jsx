@@ -6,7 +6,6 @@ import Skeleton from "../components/ui/Skeleton";
 import FocusTrends from "../components/dashboard/FocusTrends";
 import StudyHeatmap from "../components/dashboard/StudyHeatmap";
 import SubjectBreakdown from "../components/dashboard/SubjectBreakdown";
-import MedicationCorrelation from "../components/dashboard/MedicationCorrelation";
 
 export default function Dashboard() {
   const profile = useProfileStore((s) => s.profile);
@@ -34,8 +33,8 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {[1, 2, 3].map((i) => (
             <Skeleton key={i} height={80} className="rounded-xl" />
           ))}
         </div>
@@ -54,11 +53,12 @@ export default function Dashboard() {
     );
   }
 
+  const studyHours = Math.round((data.total_study_minutes || 0) / 60 * 10) / 10;
+
   const stats = [
     { label: "Sessions", value: data.total_sessions },
-    { label: "Study Hours", value: data.total_study_hours },
+    { label: "Study Hours", value: studyHours },
     { label: "Avg Focus", value: data.avg_focus?.toFixed(1) },
-    { label: "Day Streak", value: data.current_streak },
   ];
 
   return (
@@ -71,7 +71,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary cards */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {stats.map((stat) => (
           <Card key={stat.label} padding="sm" className="text-center">
             <p className="text-2xl font-bold text-surface-800">{stat.value}</p>
@@ -82,14 +82,12 @@ export default function Dashboard() {
 
       {/* Charts grid */}
       <div className="space-y-6">
-        <FocusTrends data={data.weekly_focus} />
+        <FocusTrends data={data.focus_trend} />
 
         <div className="grid gap-6 md:grid-cols-2">
-          <StudyHeatmap data={data.study_heatmap} />
-          <SubjectBreakdown data={data.subject_breakdown} />
+          <StudyHeatmap data={data.best_study_times} />
+          <SubjectBreakdown data={data.subject_averages} />
         </div>
-
-        <MedicationCorrelation data={data.medication_correlation} />
       </div>
     </div>
   );

@@ -9,18 +9,21 @@ const QUICK_SEARCHES = ["Adderall XR", "Concerta", "Vyvanse"];
 
 export default function Medications() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState(null);
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   const handleSearch = async (searchQuery) => {
     const q = searchQuery || query;
     if (!q.trim()) return;
     setLoading(true);
+    setError(false);
     try {
       const { data } = await medicationService.getInfo(q.trim());
-      setResults(data);
+      setResult(data);
     } catch {
-      setResults([]);
+      setError(true);
+      setResult(null);
     } finally {
       setLoading(false);
     }
@@ -65,100 +68,75 @@ export default function Medications() {
         ))}
       </div>
 
-      {/* Results */}
+      {/* Loading */}
       {loading && (
         <div className="space-y-4">
           <Skeleton height={200} className="rounded-xl" />
         </div>
       )}
 
-      {!loading && results !== null && results.length === 0 && (
+      {/* Error */}
+      {!loading && error && (
         <Card className="text-center">
           <p className="text-sm text-surface-400">
-            No results found. Try a different search.
+            Something went sideways. Try a different search?
           </p>
         </Card>
       )}
 
-      {!loading &&
-        results?.map((med, i) => (
-          <Card key={i} className="mb-4">
-            <h3 className="text-lg font-semibold text-surface-800">
-              {med.name}
-            </h3>
-            <p className="mt-0.5 text-xs text-surface-400">{med.type}</p>
-
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              <div className="rounded-lg bg-surface-50 p-2 text-center">
-                <p className="text-xs text-surface-400">Onset</p>
-                <p className="text-sm font-medium text-surface-700">
-                  {med.onset}
-                </p>
-              </div>
-              <div className="rounded-lg bg-surface-50 p-2 text-center">
-                <p className="text-xs text-surface-400">Peak</p>
-                <p className="text-sm font-medium text-surface-700">
-                  {med.peak}
-                </p>
-              </div>
-              <div className="rounded-lg bg-surface-50 p-2 text-center">
-                <p className="text-xs text-surface-400">Duration</p>
-                <p className="text-sm font-medium text-surface-700">
-                  {med.duration}
-                </p>
-              </div>
-            </div>
-
-            {med.study_tips?.length > 0 && (
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-surface-400">
-                  Study Tips
-                </p>
-                <ul className="space-y-1.5">
-                  {med.study_tips.map((tip, j) => (
-                    <li
-                      key={j}
-                      className="flex items-start gap-2 text-sm text-surface-600"
-                    >
-                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent-500" />
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {med.interactions?.length > 0 && (
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-warning-500">
-                  Interactions
-                </p>
-                <ul className="space-y-1.5">
-                  {med.interactions.map((item, j) => (
-                    <li
-                      key={j}
-                      className="flex items-start gap-2 text-sm text-surface-600"
-                    >
-                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-warning-400" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {med.source && (
-              <p className="mt-3 text-xs text-surface-300">
-                Source: {med.source}
-              </p>
-            )}
+      {/* Results */}
+      {!loading && result && (
+        <div className="space-y-4">
+          {/* Answer card */}
+          <Card>
+            <p className="text-sm leading-relaxed text-surface-700">
+              {result.answer}
+            </p>
           </Card>
-        ))}
 
-      <p className="mt-6 rounded-lg bg-surface-100 p-3 text-center text-xs text-surface-400">
-        This information is for educational purposes only and is not medical
-        advice. Always consult your healthcare provider about medications.
-      </p>
+          {/* Study tips */}
+          {result.study_tips?.length > 0 && (
+            <Card>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-surface-400">
+                Study Tips
+              </p>
+              <ul className="space-y-2">
+                {result.study_tips.map((tip, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-surface-600"
+                  >
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent-500" />
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {/* Sources */}
+          {result.sources_used?.length > 0 && (
+            <p className="text-xs text-surface-300">
+              Sources: {result.sources_used.join(", ")}
+            </p>
+          )}
+
+          {/* Disclaimer */}
+          {result.disclaimer && (
+            <p className="rounded-lg bg-surface-100 p-3 text-center text-xs text-surface-400">
+              {result.disclaimer}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Static disclaimer */}
+      {!result && !loading && (
+        <p className="mt-6 rounded-lg bg-surface-100 p-3 text-center text-xs text-surface-400">
+          This information is for educational purposes only and is not medical
+          advice. Always consult your healthcare provider about medications.
+        </p>
+      )}
     </div>
   );
 }

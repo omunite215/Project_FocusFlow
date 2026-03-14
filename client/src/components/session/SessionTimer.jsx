@@ -12,7 +12,7 @@ export default function SessionTimer({ onPause, onResume, onEnd }) {
   const currentBlock = useSessionStore((s) => s.currentBlock);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
 
-  const totalSeconds = (plan?.total_minutes || 60) * 60;
+  const totalSeconds = (plan?.total_study_min || 60) * 60;
   const currentBlockData = plan?.blocks?.[currentBlock];
   const isPaused = status === "paused";
 
