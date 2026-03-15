@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field, field_validator
 
 class MedicationItem(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, examples=["Vyvanse"])
-    dosage: str = Field(..., min_length=1, max_length=50, examples=["30mg"])
-    typical_time: str = Field(..., pattern=r"^\d{2}:\d{2}$", examples=["08:00"])
+    dosage: Optional[str] = Field("", max_length=50, examples=["30mg"])
+    typical_time: Optional[str] = Field("", examples=["08:00"])
 
 
 class CourseItem(BaseModel):

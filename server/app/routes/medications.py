@@ -11,11 +11,12 @@ router = APIRouter(prefix="/api/medications", tags=["medications"])
 
 
 @router.get("")
-async def get_medication_info(query: str = "") -> dict:
+async def get_medication_info(q: str = "") -> dict:
     """RAG-powered medication information and harm reduction data.
 
     Query about ADHD medications, timing, interactions, and study optimization.
     """
+    query = q
     if not query.strip():
         return {
             "answer": (
