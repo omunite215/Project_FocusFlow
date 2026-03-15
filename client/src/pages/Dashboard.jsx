@@ -3,6 +3,7 @@ import { useProfileStore } from "../stores/profileStore";
 import { dashboardService } from "../services/dashboardService";
 import Card from "../components/ui/Card";
 import Skeleton from "../components/ui/Skeleton";
+import Button from "../components/ui/Button";
 import FocusTrends from "../components/dashboard/FocusTrends";
 import StudyHeatmap from "../components/dashboard/StudyHeatmap";
 import SubjectBreakdown from "../components/dashboard/SubjectBreakdown";
@@ -11,24 +12,27 @@ export default function Dashboard() {
   const profile = useProfileStore((s) => s.profile);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const { data: dashData } = await dashboardService.get(
+        profile?.id || "user-1"
+      );
+      setData(dashData);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-    async function fetchData() {
-      try {
-        const { data: dashData } = await dashboardService.get(
-          profile?.id || "user-1"
-        );
-        if (!cancelled) setData(dashData);
-      } catch {
-        // Mock fallback handled
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
     fetchData();
-    return () => { cancelled = true; };
-  }, [profile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]);
 
   if (loading) {
     return (
@@ -39,6 +43,19 @@ export default function Dashboard() {
           ))}
         </div>
         <Skeleton height={280} className="rounded-xl" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-5xl py-12 text-center">
+        <p className="text-surface-500">
+          Couldn&apos;t load your dashboard. Give it another shot?
+        </p>
+        <Button className="mt-4" onClick={fetchData}>
+          Retry
+        </Button>
       </div>
     );
   }

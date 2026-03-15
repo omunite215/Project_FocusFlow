@@ -60,12 +60,13 @@ class CheckInRequest(BaseModel):
 
 class AdaptationSuggestion(BaseModel):
     action: str = Field(
-        ..., examples=["switch_subject", "take_break", "change_method", "end_session"]
+        ..., examples=["switch_subject", "take_break", "change_method", "end_session", "reorder_plan"]
     )
     message: str
     new_subject: Optional[str] = None
     break_duration_min: Optional[int] = None
     new_method: Optional[str] = None
+    suggested_block_order: Optional[list[int]] = None
 
 
 class CheckInResponse(BaseModel):

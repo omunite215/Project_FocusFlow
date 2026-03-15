@@ -7,6 +7,13 @@
  */
 
 @theme {
+  /* Breakpoints — Tailwind official defaults (explicit for clarity) */
+  --breakpoint-sm: 40rem;   /* 640px */
+  --breakpoint-md: 48rem;   /* 768px */
+  --breakpoint-lg: 64rem;   /* 1024px */
+  --breakpoint-xl: 80rem;   /* 1280px */
+  --breakpoint-2xl: 96rem;  /* 1536px */
+
   /* Primary: Calming blue-indigo */
   --color-primary-50: #eef2ff;
   --color-primary-100: #e0e7ff;

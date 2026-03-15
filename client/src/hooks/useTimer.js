@@ -2,23 +2,44 @@ import { useEffect, useRef, useCallback } from "react";
 import { useSessionStore } from "../stores/sessionStore";
 
 /**
- * Timer hook that ticks every second while session is active.
- * Pauses automatically when session is paused.
+ * Timer hook that uses wall-clock timestamps instead of interval counting.
+ * This eliminates the React 18 StrictMode double-count bug entirely —
+ * we never rely on "how many times setInterval fired", we just measure
+ * real elapsed time from a start timestamp.
  */
 export function useTimer() {
-  const intervalRef = useRef(null);
   const status = useSessionStore((s) => s.status);
-  const tick = useSessionStore((s) => s.tick);
+  const setElapsed = useSessionStore((s) => s.setElapsed);
   const elapsedSeconds = useSessionStore((s) => s.elapsedSeconds);
+  const rafRef = useRef(null);
 
   useEffect(() => {
-    if (status === "active") {
-      intervalRef.current = setInterval(() => tick(), 1000);
+    if (status !== "active") {
+      if (rafRef.current) {
+        clearInterval(rafRef.current);
+        rafRef.current = null;
+      }
+      return;
     }
+
+    // Capture the wall-clock start, offset by whatever is already elapsed
+    const startWall = Date.now() - elapsedSeconds * 1000;
+
+    rafRef.current = setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.floor((now - startWall) / 1000);
+      setElapsed(elapsed);
+    }, 500); // poll twice per second for responsiveness
+
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (rafRef.current) {
+        clearInterval(rafRef.current);
+        rafRef.current = null;
+      }
     };
-  }, [status, tick]);
+    // Only re-run when status changes — NOT when elapsedSeconds changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, setElapsed]);
 
   const formatTime = useCallback((totalSeconds) => {
     const hrs = Math.floor(totalSeconds / 3600);

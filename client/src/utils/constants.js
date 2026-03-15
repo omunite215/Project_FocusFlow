@@ -31,6 +31,9 @@ export const DEFAULT_CHECKIN_INTERVAL = 15;
 export const FOCUS_DROP_THRESHOLD = 2;
 export const CONSECUTIVE_DROPS_TRIGGER = 2;
 
+// Distraction nudge — minutes before showing gentle reminder during pause
+export const DISTRACTION_NUDGE_DELAY_MIN = 3;
+
 // Study method suggestions for adaptation
 export const STUDY_METHODS = [
   "Active Recall",

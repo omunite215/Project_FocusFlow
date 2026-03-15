@@ -181,7 +181,8 @@ async def end_session(
 
     if session.started_at:
         started = session.started_at.replace(tzinfo=timezone.utc) if session.started_at.tzinfo is None else session.started_at
-        session.actual_duration_min = int((now - started).total_seconds() / 60)
+        elapsed_sec = (now - started).total_seconds()
+        session.actual_duration_min = max(1, int(elapsed_sec / 60)) if elapsed_sec > 0 else 1
 
     # Build focus data
     focus_data = [
@@ -195,10 +196,35 @@ async def end_session(
     ]
 
     avg_focus = (
-        sum(c.focus_level for c in checkins) / len(checkins) if checkins else 0.0
+        sum(c.focus_level for c in checkins) / len(checkins) if checkins else 3.0
     )
-    blocks_completed = max((c.block_number for c in checkins), default=0)
+
+    # Count blocks from plan if no check-ins recorded
+    plan_blocks_count = 0
+    if session.session_plan:
+        try:
+            plan_data = json.loads(session.session_plan)
+            plan_blocks_count = len(plan_data.get("blocks", []))
+        except (json.JSONDecodeError, TypeError):
+            pass
+    blocks_completed = max((c.block_number for c in checkins), default=0) or plan_blocks_count
     subjects_studied = list(set(c.subject for c in checkins))
+    if not subjects_studied and session.subjects:
+        try:
+            subjects_studied = json.loads(session.subjects)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    # Compute peak/low focus times from check-in data
+    peak_focus_time = None
+    low_focus_time = None
+    if checkins:
+        best = max(checkins, key=lambda c: c.focus_level)
+        worst = min(checkins, key=lambda c: c.focus_level)
+        if best.timestamp:
+            peak_focus_time = best.timestamp.strftime("%I:%M %p")
+        if worst.timestamp and worst.focus_level < best.focus_level:
+            low_focus_time = worst.timestamp.strftime("%I:%M %p")
 
     # Get previous session avg for comparison
     prev_avg = await _get_previous_session_avg(db, session.user_id, session.id)
@@ -207,6 +233,7 @@ async def end_session(
     report = await _generate_llm_report(
         db, session, checkins, focus_data, avg_focus,
         blocks_completed, subjects_studied, prev_avg,
+        peak_focus_time, low_focus_time,
     )
 
     session.ai_report = report.model_dump_json()
@@ -300,6 +327,8 @@ async def _generate_llm_adaptation(
         medication_taken_at = None
         session_duration = 0
 
+        plan_blocks = None
+
         if session:
             profile = await _get_profile(db, session.user_id)
             profile_context = _build_profile_context(profile) if profile else profile_context
@@ -308,6 +337,13 @@ async def _generate_llm_adaptation(
             if session.started_at:
                 started = session.started_at.replace(tzinfo=timezone.utc) if session.started_at.tzinfo is None else session.started_at
                 session_duration = int((datetime.now(timezone.utc) - started).total_seconds() / 60)
+            # Extract plan blocks for reordering context
+            if session.session_plan:
+                try:
+                    plan_data = json.loads(session.session_plan)
+                    plan_blocks = plan_data.get("blocks", [])
+                except (json.JSONDecodeError, TypeError):
+                    pass
 
         # Get recent focus levels
         checkin_result = await db.execute(
@@ -336,6 +372,7 @@ async def _generate_llm_adaptation(
             available_subjects=available_subjects,
             session_duration_so_far_min=session_duration,
             medication_taken_at=medication_taken_at,
+            plan_blocks=plan_blocks,
         )
 
         result = await llm_service.generate_json(
@@ -363,6 +400,8 @@ async def _generate_llm_report(
     blocks_completed: int,
     subjects_studied: list[str],
     previous_session_avg: Optional[float],
+    peak_focus_time: Optional[str] = None,
+    low_focus_time: Optional[str] = None,
 ) -> SessionReport:
     """Generate a session report via LLM, falling back to stub on failure."""
     try:
@@ -414,11 +453,11 @@ async def _generate_llm_report(
             return SessionReport(
                 session_id=session.id,
                 summary=result.get("summary", f"Session completed: {blocks_completed} blocks, avg focus {avg_focus:.1f}/5."),
-                total_duration_min=session.actual_duration_min or 0,
+                total_duration_min=session.actual_duration_min or 1,
                 blocks_completed=blocks_completed,
                 average_focus=round(avg_focus, 2),
-                peak_focus_time=result.get("peak_focus_time"),
-                low_focus_time=result.get("low_focus_time"),
+                peak_focus_time=result.get("peak_focus_time") or peak_focus_time or "N/A",
+                low_focus_time=result.get("low_focus_time") or low_focus_time,
                 focus_data=focus_data,
                 recommendations=recommendations if recommendations else [
                     SessionRecommendation(
@@ -436,17 +475,19 @@ async def _generate_llm_report(
         logger.warning(f"LLM report generation failed, using stub: {e}")
 
     # Fallback to stub report
+    duration = session.actual_duration_min or 1
+    subj_str = ", ".join(subjects_studied) if subjects_studied else "your subjects"
     return SessionReport(
         session_id=session.id,
         summary=(
-            f"You studied for {session.actual_duration_min or 0} minutes "
-            f"across {blocks_completed} blocks. Average focus: {avg_focus:.1f}/5."
+            f"You studied {subj_str} for **{duration} minutes** "
+            f"across **{blocks_completed} blocks**. Average focus: **{avg_focus:.1f}/5**."
         ),
-        total_duration_min=session.actual_duration_min or 0,
+        total_duration_min=duration,
         blocks_completed=blocks_completed,
         average_focus=round(avg_focus, 2),
-        peak_focus_time=None,
-        low_focus_time=None,
+        peak_focus_time=peak_focus_time or "N/A",
+        low_focus_time=low_focus_time,
         focus_data=focus_data,
         recommendations=[
             SessionRecommendation(

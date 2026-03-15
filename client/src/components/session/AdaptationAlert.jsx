@@ -65,6 +65,22 @@ export default function AdaptationAlert({ suggestion, onDismiss, onAccept }) {
         </p>
       )}
 
+      {suggestion.action === "reorder_plan" && suggestion.suggested_block_order && (
+        <div className="mb-3 ml-11">
+          <p className="text-xs font-medium text-surface-500 mb-1">Suggested new order:</p>
+          <div className="flex flex-wrap gap-1">
+            {suggestion.suggested_block_order.map((blockIdx, pos) => (
+              <span
+                key={pos}
+                className="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700"
+              >
+                {pos + 1}. Block {blockIdx + 1}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 ml-11">
         <Button size="sm" onClick={onAccept}>
           Try This

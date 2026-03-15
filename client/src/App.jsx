@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 
@@ -22,25 +22,30 @@ function LoadingFallback() {
   );
 }
 
+function SuspenseWrapper({ children }) {
+  return <Suspense fallback={<LoadingFallback />}>{children}</Suspense>;
+}
+
+const router = createBrowserRouter([
+  {
+    element: <PageWrapper />,
+    children: [
+      { path: "/", element: <SuspenseWrapper><Home /></SuspenseWrapper> },
+      { path: "/onboarding", element: <SuspenseWrapper><Onboarding /></SuspenseWrapper> },
+      { path: "/session", element: <SuspenseWrapper><ActiveSession /></SuspenseWrapper> },
+      { path: "/report/:sessionId", element: <SuspenseWrapper><Report /></SuspenseWrapper> },
+      { path: "/dashboard", element: <SuspenseWrapper><Dashboard /></SuspenseWrapper> },
+      { path: "/medications", element: <SuspenseWrapper><Medications /></SuspenseWrapper> },
+      { path: "/profile", element: <SuspenseWrapper><ProfileEdit /></SuspenseWrapper> },
+    ],
+  },
+  { path: "*", element: <Navigate to="/" replace /> },
+]);
+
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route element={<PageWrapper />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/session" element={<ActiveSession />} />
-              <Route path="/report/:sessionId" element={<Report />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/medications" element={<Medications />} />
-              <Route path="/profile" element={<ProfileEdit />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+      <RouterProvider router={router} />
     </ErrorBoundary>
   );
 }

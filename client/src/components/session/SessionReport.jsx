@@ -5,6 +5,23 @@ import Card from "../ui/Card";
 import FocusCurve from "./FocusCurve";
 import { formatDuration } from "../../utils/formatters";
 
+/**
+ * Renders text with **bold** markdown syntax as <strong> tags.
+ */
+function renderBoldText(text) {
+  if (!text) return null;
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? (
+      <strong key={i} className="font-bold text-surface-800">
+        {part}
+      </strong>
+    ) : (
+      part
+    )
+  );
+}
+
 function focusColor(value) {
   if (value >= 4) return "text-accent-600";
   if (value >= 3) return "text-warning-500";
@@ -91,12 +108,12 @@ export default function SessionReport({ report }) {
     <div ref={sectionsRef} className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-surface-800">
+        <h2 className="text-3xl font-extrabold text-surface-800">
           {encouragement || "Nice work!"}
         </h2>
         {summary && (
-          <p className="mt-2 text-sm leading-relaxed text-surface-500">
-            {summary}
+          <p className="mt-2 text-sm font-medium leading-relaxed text-surface-600">
+            {renderBoldText(summary)}
           </p>
         )}
       </div>
@@ -118,10 +135,10 @@ export default function SessionReport({ report }) {
                 d={stat.icon}
               />
             </svg>
-            <p className={`text-xl font-bold ${stat.color || "text-surface-800"}`}>
-              {stat.value}
+            <p className={`text-2xl font-extrabold ${stat.color || "text-surface-800"}`}>
+              {stat.value ?? "—"}
             </p>
-            <p className="text-xs text-surface-400">{stat.label}</p>
+            <p className="text-xs font-semibold text-surface-500">{stat.label}</p>
           </Card>
         ))}
       </div>
@@ -162,7 +179,7 @@ export default function SessionReport({ report }) {
                     />
                   </svg>
                 </div>
-                <p className="text-sm text-surface-600">{rec.text}</p>
+                <p className="text-sm text-surface-600">{renderBoldText(rec.text)}</p>
               </Card>
             ))}
           </div>

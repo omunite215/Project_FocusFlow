@@ -35,7 +35,7 @@ export function useSession() {
 
   const endSession = useCallback(async () => {
     const { data } = await sessionService.end(store.sessionId);
-    store.endSession();
+    store.endSession(data.report);
     return data;
   }, [store]);
 

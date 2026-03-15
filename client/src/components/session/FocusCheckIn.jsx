@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { FOCUS_LEVELS } from "../../utils/constants";
+import { playCheckInClick } from "../../utils/sounds";
 import Button from "../ui/Button";
 
 const FOCUS_COLORS_BG = {
@@ -42,6 +43,7 @@ export default function FocusCheckIn({ onSubmit, disabled = false }) {
     setSubmitting(true);
     try {
       await onSubmit(selected);
+      playCheckInClick();
     } finally {
       setSelected(null);
       setSubmitting(false);

@@ -8,11 +8,14 @@ export default function ProgressRing({
   size = 120,
   strokeWidth = 8,
   color = "#6366f1",
+  breathing = false,
   label,
   children,
   className = "",
 }) {
   const circleRef = useRef(null);
+  const svgRef = useRef(null);
+  const breathTweenRef = useRef(null);
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const percent = Math.min(value / max, 1);
@@ -30,6 +33,30 @@ export default function ProgressRing({
     { dependencies: [offset] }
   );
 
+  // Breathing animation for pause state
+  useGSAP(
+    () => {
+      if (!svgRef.current) return;
+      if (breathing) {
+        breathTweenRef.current = gsap.to(svgRef.current, {
+          scale: 1.03,
+          duration: 1.5,
+          ease: "sine.inOut",
+          repeat: -1,
+          yoyo: true,
+          transformOrigin: "center center",
+        });
+      } else {
+        if (breathTweenRef.current) {
+          breathTweenRef.current.kill();
+          breathTweenRef.current = null;
+        }
+        gsap.set(svgRef.current, { scale: 1 });
+      }
+    },
+    { dependencies: [breathing] }
+  );
+
   return (
     <div
       className={`relative inline-flex items-center justify-center ${className}`}
@@ -39,7 +66,7 @@ export default function ProgressRing({
       aria-valuemax={max}
       aria-label={label}
     >
-      <svg width={size} height={size} className="-rotate-90">
+      <svg ref={svgRef} width={size} height={size} className="-rotate-90">
         <circle
           cx={size / 2}
           cy={size / 2}

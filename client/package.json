@@ -10,14 +10,15 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@gsap/react": "^2.1.0",
+    "axios": "^1.7.0",
+    "canvas-confetti": "^1.9.4",
+    "gsap": "^3.12.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.0.0",
-    "axios": "^1.7.0",
-    "zustand": "^5.0.0",
     "recharts": "^2.15.0",
-    "gsap": "^3.12.0",
-    "@gsap/react": "^2.1.0"
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.0",
