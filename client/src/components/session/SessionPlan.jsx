@@ -14,17 +14,19 @@ export default function SessionPlan({ plan, currentBlock = 0, onCompleteBlock })
     const el = blockRefs.current[index];
     if (!el) return;
 
-    // Green glow flash on the row
-    gsap.fromTo(
-      el,
-      { backgroundColor: "rgba(34, 197, 94, 0.35)", scale: 1.02 },
-      {
-        backgroundColor: "rgba(34, 197, 94, 0)",
-        scale: 1,
-        duration: 0.8,
-        ease: "power2.out",
-      }
-    );
+    // Smooth scale up → hold → scale back with green glow
+    const tl = gsap.timeline();
+    tl.to(el, {
+      backgroundColor: "rgba(34, 197, 94, 0.35)",
+      scale: 1.03,
+      duration: 0.25,
+      ease: "power2.out",
+    }).to(el, {
+      backgroundColor: "rgba(34, 197, 94, 0)",
+      scale: 1,
+      duration: 0.6,
+      ease: "power2.inOut",
+    });
   }, []);
 
   const handleDone = (index) => {

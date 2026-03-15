@@ -80,6 +80,20 @@ export default function SessionReport({ report }) {
     subject: d.subject,
   }));
 
+  // Compute peak focus time from focus_data if backend didn't provide it
+  const computedPeakFocusTime = (() => {
+    if (peak_focus_time) return peak_focus_time;
+    if (!focus_data || focus_data.length === 0) return null;
+    const peak = focus_data.reduce((best, d) =>
+      d.focus_level > best.focus_level ? d : best
+    );
+    return new Date(peak.timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  })();
+
   const stats = [
     {
       label: "Duration",
@@ -94,7 +108,7 @@ export default function SessionReport({ report }) {
     },
     {
       label: "Peak Focus",
-      value: peak_focus_time,
+      value: computedPeakFocusTime,
       icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z",
     },
     {

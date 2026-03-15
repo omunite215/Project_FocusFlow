@@ -6,7 +6,7 @@ import {
   mockSessionEnd,
   mockSessionReport,
   mockDashboardData,
-  mockMedicationResponse,
+  mockMedicationDB,
 } from "./data";
 
 let checkInCount = 0;
@@ -104,12 +104,26 @@ export function setupMocks() {
       });
     }
 
-    // GET /api/medications
+    // GET /api/medications?q=...
     if (url?.startsWith("/api/medications") && method === "get") {
       await delay(400);
+      const q = (config.params?.q || "").toLowerCase().trim();
+      // Exact match first, then partial match
+      const match = mockMedicationDB[q]
+        || Object.entries(mockMedicationDB).find(([key]) => key.includes(q) || q.includes(key))?.[1];
+      const disclaimer =
+        "This information is for educational purposes only and is not medical advice. Always consult your healthcare provider about medications.";
+      const data = match
+        ? { ...match, disclaimer }
+        : {
+            answer: `No specific information found for "${config.params?.q || "unknown"}". Try searching for common ADHD medications like Adderall XR, Concerta, Vyvanse, Ritalin, Strattera, or Focalin.`,
+            study_tips: [],
+            disclaimer,
+            sources_used: [],
+          };
       return Promise.reject({
         __MOCK__: true,
-        response: { data: mockMedicationResponse, status: 200 },
+        response: { data, status: 200 },
       });
     }
 

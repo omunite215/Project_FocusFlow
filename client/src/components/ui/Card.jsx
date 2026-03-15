@@ -14,7 +14,7 @@ export default function Card({
 }) {
   return (
     <div
-      className={`rounded-xl border border-surface-200 bg-white ${PADDING[padding] || PADDING.md} ${hoverable ? "transition-shadow hover:border-surface-300 hover:shadow-md" : ""} ${className}`}
+      className={`rounded-xl border border-surface-200 bg-white transition-all duration-300 ease-out ${PADDING[padding] || PADDING.md} ${hoverable ? "hover:border-surface-300 hover:shadow-md hover:scale-[1.01]" : ""} ${className}`}
       {...rest}
     >
       {children}

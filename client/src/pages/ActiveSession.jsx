@@ -50,21 +50,25 @@ export default function ActiveSession() {
   }, [status, navigate]);
 
   // Trigger presence check popup on interval (with alert sound + TTS)
+  // Guard: don't re-trigger while modal or check-in is already showing
   useEffect(() => {
     if (status !== "active") return;
+    if (showPresenceCheck || showCheckIn) return;
     if (
       elapsedSeconds > 0 &&
       elapsedSeconds - lastCheckInAt >= checkInIntervalSec
     ) {
       setShowPresenceCheck(true);
     }
-  }, [elapsedSeconds, lastCheckInAt, status, checkInIntervalSec]);
+  }, [elapsedSeconds, lastCheckInAt, status, checkInIntervalSec, showPresenceCheck, showCheckIn]);
 
-  // When user confirms presence, dismiss modal and show focus check-in
+  // When user confirms presence, reset the timer and show focus check-in
   const handlePresenceConfirm = useCallback(() => {
     setShowPresenceCheck(false);
     setShowCheckIn(true);
-  }, []);
+    // Reset the interval anchor so next popup fires after another full interval
+    setLastCheckInAt(elapsedSeconds);
+  }, [elapsedSeconds]);
 
   // Handle manual block completion
   const handleCompleteBlock = useCallback(
@@ -188,7 +192,14 @@ export default function ActiveSession() {
         <div className="space-y-6">
           <SessionPlan plan={plan} currentBlock={currentBlock} onCompleteBlock={handleCompleteBlock} />
 
-          <MicroTaskBreakdown subject={plan?.blocks?.[currentBlock]?.subject} />
+          <MicroTaskBreakdown
+            subject={plan?.blocks?.[currentBlock]?.subject}
+            onAllStepsDone={() => {
+              if (!completedBlocks.includes(currentBlock)) {
+                handleCompleteBlock(currentBlock);
+              }
+            }}
+          />
 
           {showCheckIn || totalCheckIns === 0 ? (
             <FocusCheckIn

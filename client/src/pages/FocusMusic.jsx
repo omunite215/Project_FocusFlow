@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useMusicStore, getEngine, setEngine } from "../stores/musicStore";
 
+/* eslint-disable no-empty */
 // ═══════════════════════════════════════════════════════════════
 // AUDIO ENGINE — Neuroscience-grounded, warm synthesis
 // ═══════════════════════════════════════════════════════════════
@@ -9,9 +11,11 @@ class SoothingEngine {
     this.cx = null; this.mg = null; this.rv = null; this.rg = null;
     this.dg = null; this.wf = null; this.ns = []; this.an = {};
     this.on = false; this.si = null; this.bn = null;
+    this.supported = !!(window.AudioContext || window.webkitAudioContext);
   }
   init() {
     if (this.cx) return;
+    if (!this.supported) return;
     this.cx = new (window.AudioContext || window.webkitAudioContext)();
     this.mg = this.cx.createGain(); this.mg.gain.value = 0.55;
     this.wf = this.cx.createBiquadFilter(); this.wf.type = "lowpass"; this.wf.frequency.value = 3200; this.wf.Q.value = 0.35;
@@ -28,8 +32,9 @@ class SoothingEngine {
   resume() { if (this.cx?.state === "suspended") this.cx.resume(); }
   vol(v) { if (this.mg) this.mg.gain.value = v; }
   get D() { return this.wf; }
-  stop() { this.on = false; clearInterval(this.si); this.ns.forEach(n => { try { n.stop?.(0); } catch {} }); this.ns = []; }
+  stop() { this.on = false; clearInterval(this.si); this.ns.forEach(n => { try { n.stop?.(0); } catch {} try { n.disconnect?.(); } catch {} }); this.ns = []; }
   play(ch) {
+    if (!this.supported) return;
     this.init(); this.resume(); this.stop(); this.on = true;
     const rv = { lofi: .3, ambient: .35, classical: .45, nature: .3, electronic: .12, piano: .5, cafe: .15, binaural: .05 };
     const wm = { lofi: 2800, ambient: 3800, classical: 5500, nature: 4500, electronic: 4000, piano: 6000, cafe: 4500, binaural: 8000 };
@@ -69,6 +74,7 @@ class SoothingEngine {
 
   // ── Ambient layers ──
   toggleAmb(id, freq) {
+    if (!this.supported) return false;
     this.init(); this.resume();
     if (this.an[id]) { try { this.an[id].s.stop(); } catch {} delete this.an[id]; return false; }
     const c = this.cx, bs = 2*c.sampleRate, b = c.createBuffer(1,bs,c.sampleRate), d = b.getChannelData(0);
@@ -93,7 +99,7 @@ class SoothingEngine {
       default: for(let i=0;i<bs;i++)d[i]=Math.random()*2-1;
     }
   }
-  destroy() { this.stop(); this.stopBreathe(); Object.values(this.an).forEach(n => { try { n.s.stop(); } catch {} }); this.an = {}; if (this.cx) this.cx.close(); }
+  destroy() { this.stop(); this.stopBreathe(); Object.values(this.an).forEach(n => { try { n.s.stop(); n.s.disconnect(); } catch {} }); this.an = {}; if (this.cx) { try { this.cx.close(); } catch {} } }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -179,10 +185,10 @@ function CanvasVisualizer({ active }) {
         grad.addColorStop(0,"rgba(99,102,241,.35)"); grad.addColorStop(.5,"rgba(129,140,248,.15)"); grad.addColorStop(1,"rgba(20,184,166,.05)");
         cx.fillStyle = grad; cx.beginPath(); cx.roundRect(x+1,h-bh,bw-2,bh,2); cx.fill();
       }
-      id = requestAnimationFrame(draw);
+      id = window.requestAnimationFrame(draw);
     };
-    id = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(id); window.removeEventListener("resize", resize); };
+    id = window.requestAnimationFrame(draw);
+    return () => { window.cancelAnimationFrame(id); window.removeEventListener("resize", resize); };
   }, [active]);
   return <canvas ref={ref} className="w-full rounded-xl mb-3.5" style={{ height: 72 }} />;
 }
@@ -199,10 +205,10 @@ function Particles() {
     const draw = () => {
       cx.clearRect(0,0,W,H);
       ps.forEach(p => { p.x += p.dx; p.y += p.dy; if(p.x<0)p.x=W; if(p.x>W)p.x=0; if(p.y<0)p.y=H; if(p.y>H)p.y=0; cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2); cx.fillStyle=`rgba(99,102,241,${p.o})`; cx.fill(); });
-      id = requestAnimationFrame(draw);
+      id = window.requestAnimationFrame(draw);
     };
-    id = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(id); window.removeEventListener("resize", resize); };
+    id = window.requestAnimationFrame(draw);
+    return () => { window.cancelAnimationFrame(id); window.removeEventListener("resize", resize); };
   }, []);
   return <canvas ref={ref} className="fixed inset-0 z-0 pointer-events-none" />;
 }
@@ -266,40 +272,52 @@ function RatingCard({ show, onSubmit }) {
 // ═══════════════════════════════════════════════════════════════
 
 export default function FocusMusic() {
-  const engine = useRef(new SoothingEngine());
-  const [channel, setChannel] = useState(null);
-  const [playing, setPlaying] = useState(false);
-  const [volume, setVolume] = useState(55);
-  const [amb, setAmb] = useState({});
-  const [breathe, setBreathe] = useState(false);
+  // Initialize engine singleton on first render — persists across route changes
+  const engine = useRef(getEngine() || (() => { const e = new SoothingEngine(); setEngine(e); return e; })());
+
+  const channel = useMusicStore((s) => s.channel);
+  const playing = useMusicStore((s) => s.playing);
+  const volume = useMusicStore((s) => s.volume);
+  const amb = useMusicStore((s) => s.amb);
+  const breathe = useMusicStore((s) => s.breathe);
+  const storeSetChannel = useMusicStore((s) => s.setChannel);
+  const storeSetPlaying = useMusicStore((s) => s.setPlaying);
+  const storeSetVolume = useMusicStore((s) => s.setVolume);
+  const storeSetAmb = useMusicStore((s) => s.setAmb);
+  const storeSetBreathe = useMusicStore((s) => s.setBreathe);
+
   const [showRating, setShowRating] = useState(false);
   const [showHP, setShowHP] = useState(false);
+  const [hpDismissed, setHpDismissed] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
 
   const ch = useMemo(() => CHANNELS.find(c => c.id === channel), [channel]);
 
   const doSelect = useCallback((id, presetAmb) => {
-    setChannel(id); setPlaying(true);
+    storeSetChannel(id); storeSetPlaying(true);
     engine.current.play(id);
     if (presetAmb) {
       Object.keys(amb).forEach(aid => engine.current.toggleAmb(aid, 0));
       const newAmb = {};
       presetAmb.forEach(aid => { const a = AMBIENTS.find(x => x.id === aid); if(a) { engine.current.toggleAmb(aid, a.freq); newAmb[aid] = { v: .18 }; } });
-      setAmb(newAmb);
+      storeSetAmb(newAmb);
     }
-  }, [amb]);
+  }, [amb, storeSetChannel, storeSetPlaying, storeSetAmb]);
 
   const selectChannel = useCallback((id) => {
+    if (hpDismissed) { doSelect(id); return; }
     setShowHP(true); setPendingAction({ type: "channel", id });
-  }, []);
+  }, [hpDismissed, doSelect]);
 
   const applyPreset = useCallback((i) => {
     const p = PRESETS[i];
+    if (hpDismissed) { doSelect(p.ch, p.amb); return; }
     setShowHP(true); setPendingAction({ type: "preset", ch: p.ch, amb: p.amb });
-  }, []);
+  }, [hpDismissed, doSelect]);
 
   const closeHP = useCallback(() => {
     setShowHP(false);
+    setHpDismissed(true);
     if (pendingAction) {
       if (pendingAction.type === "channel") doSelect(pendingAction.id);
       else if (pendingAction.type === "preset") doSelect(pendingAction.ch, pendingAction.amb);
@@ -309,24 +327,23 @@ export default function FocusMusic() {
 
   const togglePlay = useCallback(() => {
     if (!channel) { selectChannel("lofi"); return; }
-    if (playing) { engine.current.stop(); setPlaying(false); }
-    else { engine.current.play(channel); setPlaying(true); }
-  }, [channel, playing, selectChannel]);
+    if (playing) { engine.current.stop(); storeSetPlaying(false); }
+    else { engine.current.play(channel); storeSetPlaying(true); }
+  }, [channel, playing, selectChannel, storeSetPlaying]);
 
   const toggleAmb = useCallback((id, freq) => {
     const on = engine.current.toggleAmb(id, freq);
-    setAmb(p => { const n = {...p}; if(on) n[id] = {v:.18}; else delete n[id]; return n; });
-  }, []);
+    storeSetAmb(p => { const n = {...p}; if(on) n[id] = {v:.18}; else delete n[id]; return n; });
+  }, [storeSetAmb]);
 
   const toggleBreathe = useCallback(() => {
-    setBreathe(p => {
-      if (!p) engine.current.startBreathe(); else engine.current.stopBreathe();
-      return !p;
-    });
-  }, []);
+    const next = !breathe;
+    if (next) engine.current.startBreathe(); else engine.current.stopBreathe();
+    storeSetBreathe(next);
+  }, [breathe, storeSetBreathe]);
 
   useEffect(() => { engine.current.vol(volume/100); }, [volume]);
-  useEffect(() => () => engine.current.destroy(), []);
+  // No destroy on unmount — engine persists across pages
 
   return (
     <div className="min-h-screen bg-stone-50 relative">
@@ -339,6 +356,14 @@ export default function FocusMusic() {
           <h1 className="text-4xl font-light tracking-tight mb-1.5" style={{ fontFamily:"'Fraunces',serif" }}>Focus sounds</h1>
           <p className="text-stone-400 text-sm leading-relaxed max-w-lg">Neuroscience-backed audio for ADHD focus. Breathing entrainment, research-grounded sound design, and adaptive mixing.</p>
         </div>
+
+        {/* Web Audio unsupported banner */}
+        {!engine.current.supported && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-5 text-center">
+            <p className="text-sm font-medium text-red-700">Your browser does not support the Web Audio API.</p>
+            <p className="text-xs text-red-500 mt-1">Please use a modern browser like Chrome, Firefox, Edge, or Safari to enjoy focus sounds.</p>
+          </div>
+        )}
 
         {/* Presets */}
         <div className="mb-8">
@@ -391,7 +416,7 @@ export default function FocusMusic() {
 
           <div className="flex items-center gap-3 px-2 relative z-10">
             <span className="text-sm text-stone-400">🔈</span>
-            <input type="range" min="0" max="100" value={volume} onChange={e => setVolume(+e.target.value)} className="flex-1 h-1 appearance-none rounded-full bg-stone-200 accent-indigo-500 cursor-pointer" />
+            <input type="range" min="0" max="100" value={volume} onChange={e => storeSetVolume(+e.target.value)} className="flex-1 h-1 appearance-none rounded-full bg-stone-200 accent-indigo-500 cursor-pointer" />
             <span className="text-sm text-stone-400">🔊</span>
           </div>
 
@@ -411,7 +436,7 @@ export default function FocusMusic() {
                     <span className={`text-xs font-medium block ${on ? "text-teal-700" : "text-stone-600"}`}>{a.name}</span>
                     <span className="text-[10px] text-stone-400 block mt-0.5">{a.desc}</span>
                   </div>
-                  {on && <input type="range" min="0" max="100" value={Math.round((amb[a.id]?.v||.18)*100)} onChange={e => { const v = +e.target.value/100; engine.current.setAV(a.id, v); setAmb(p => ({...p,[a.id]:{v}})); }} onClick={e => e.stopPropagation()} className="w-full h-1 mt-3 appearance-none rounded-full bg-teal-200 accent-teal-500 cursor-pointer" />}
+                  {on && <input type="range" min="0" max="100" value={Math.round((amb[a.id]?.v||.18)*100)} onChange={e => { const v = +e.target.value/100; engine.current.setAV(a.id, v); storeSetAmb(p => ({...p,[a.id]:{v}})); }} onClick={e => e.stopPropagation()} className="w-full h-1 mt-3 appearance-none rounded-full bg-teal-200 accent-teal-500 cursor-pointer" />}
                 </div>
               );
             })}
@@ -419,7 +444,7 @@ export default function FocusMusic() {
         </div>
 
         <FocusTimer onComplete={() => setShowRating(true)} />
-        <RatingCard show={showRating} onSubmit={r => console.log("Rating:", r)} />
+        <RatingCard show={showRating} onSubmit={() => {}} />
 
         <p className="text-center text-[11px] text-stone-300 mt-10 leading-relaxed">Based on OHSU 2024 meta-analysis · Frontiers in Psychology 2020 · Northwestern Auditory Neuroscience Lab<br/>All audio synthesized in real-time · Zero external files</p>
       </div>

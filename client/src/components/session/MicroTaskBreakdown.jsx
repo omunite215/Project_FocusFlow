@@ -20,7 +20,7 @@ function generateLocalSteps(task) {
   ];
 }
 
-export default function MicroTaskBreakdown({ subject }) {
+export default function MicroTaskBreakdown({ subject, onAllStepsDone }) {
   const [steps, setSteps] = useState(null);
   const [checked, setChecked] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -75,11 +75,17 @@ export default function MicroTaskBreakdown({ subject }) {
   };
 
   const toggleCheck = (stepNum) => {
-    setChecked((prev) =>
-      prev.includes(stepNum)
+    setChecked((prev) => {
+      const next = prev.includes(stepNum)
         ? prev.filter((s) => s !== stepNum)
-        : [...prev, stepNum]
-    );
+        : [...prev, stepNum];
+      // Auto-complete parent block when all micro-steps are checked
+      if (steps && next.length === steps.length && onAllStepsDone) {
+        // Defer to avoid state update during render
+        setTimeout(() => onAllStepsDone(), 0);
+      }
+      return next;
+    });
   };
 
   const allDone = steps && checked.length === steps.length;

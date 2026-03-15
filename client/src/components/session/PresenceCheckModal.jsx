@@ -6,17 +6,16 @@ import Button from "../ui/Button";
 
 /**
  * Full-screen presence check modal.
- * Plays an alert chime + TTS "Are you there?" when it appears.
+ * Plays an alert chime + randomized TTS voice when it appears.
  * User must interact (confirm presence) to dismiss.
  */
 export default function PresenceCheckModal({ onConfirm }) {
   const overlayRef = useRef(null);
   const cardRef = useRef(null);
 
-  // Play alert sound + TTS on mount
+  // Play alert sound + random TTS on mount
   useEffect(() => {
     playAlertChime();
-    // Small delay so chime finishes before voice
     const timeout = setTimeout(() => {
       speakPresenceCheck();
     }, 900);
@@ -46,17 +45,17 @@ export default function PresenceCheckModal({ onConfirm }) {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-surface-900/50 backdrop-blur-sm"
     >
       <div
         ref={cardRef}
         className="mx-4 max-w-sm rounded-2xl bg-white p-8 text-center shadow-2xl"
       >
-        {/* Pulsing attention indicator */}
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">
-          <div className="h-10 w-10 animate-ping rounded-full bg-primary-300 opacity-50" />
+        {/* Pulsing attention indicator — contained with overflow-hidden */}
+        <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary-100">
+          <div className="absolute h-10 w-10 animate-ping rounded-full bg-primary-300 opacity-50" />
           <svg
-            className="absolute h-8 w-8 text-primary-600"
+            className="relative h-8 w-8 text-primary-600"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

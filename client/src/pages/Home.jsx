@@ -8,6 +8,14 @@ import { ENERGY_LEVELS } from "../utils/constants";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 
+const DIFFICULTY_OPTIONS = [
+  { value: 1, label: "Easy" },
+  { value: 2, label: "Moderate" },
+  { value: 3, label: "Medium" },
+  { value: 4, label: "Hard" },
+  { value: 5, label: "Very Hard" },
+];
+
 const ENERGY_COLORS_DEFAULT = {
   1: "border-focus-1/40 bg-focus-1/10 hover:bg-focus-1/20 text-surface-500",
   2: "border-focus-2/40 bg-focus-2/10 hover:bg-focus-2/20 text-surface-500",
@@ -43,6 +51,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [checkInSec, setCheckInSec] = useState(15);
   const [customCheckIn, setCustomCheckIn] = useState(false);
+  const [showAddSubject, setShowAddSubject] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState("");
+  const [newSubjectDifficulty, setNewSubjectDifficulty] = useState(3);
+  const updateProfile = useProfileStore((s) => s.updateProfile);
   const prevStatus = useRef(sessionStatus);
 
   const CHECKIN_PRESETS = [5, 10, 15, 20]; // seconds
@@ -88,6 +100,25 @@ export default function Home() {
     setSelectedSubjects((prev) =>
       prev.includes(name) ? prev.filter((s) => s !== name) : [...prev, name]
     );
+  };
+
+  const handleAddSubject = () => {
+    const trimmed = newSubjectName.trim();
+    if (!trimmed) return;
+    const exists = profile.courses?.some(
+      (c) => c.name.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (exists) {
+      addToast({ type: "warning", message: "Subject already exists." });
+      return;
+    }
+    const newCourse = { name: trimmed, difficulty: newSubjectDifficulty };
+    updateProfile({ courses: [...(profile.courses || []), newCourse] });
+    setSelectedSubjects((prev) => [...prev, trimmed]);
+    setNewSubjectName("");
+    setNewSubjectDifficulty(3);
+    setShowAddSubject(false);
+    addToast({ type: "success", message: `Added "${trimmed}" to your subjects.` });
   };
 
   const handleStart = async () => {
@@ -253,7 +284,53 @@ export default function Home() {
                   </button>
                 );
               })}
+              {/* Add subject inline */}
+              <button
+                onClick={() => setShowAddSubject((v) => !v)}
+                className={`rounded-lg border border-dashed px-4 py-2 text-sm font-medium transition-colors ${
+                  showAddSubject
+                    ? "border-primary-400 bg-primary-50 text-primary-700"
+                    : "border-surface-300 text-surface-400 hover:border-primary-300 hover:text-primary-500"
+                }`}
+              >
+                + Add Subject
+              </button>
             </div>
+            {showAddSubject && (
+              <div className="mt-3 flex flex-wrap items-end gap-2 rounded-lg border border-surface-200 bg-surface-50 p-3">
+                <div className="min-w-0 flex-1">
+                  <label className="mb-1 block text-[10px] font-medium text-surface-500">Subject name</label>
+                  <input
+                    type="text"
+                    value={newSubjectName}
+                    onChange={(e) => setNewSubjectName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleAddSubject(); }}
+                    placeholder="e.g. Linear Algebra"
+                    className="w-full rounded-lg border border-surface-300 px-3 py-2 text-sm text-surface-700 placeholder:text-surface-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] font-medium text-surface-500">Difficulty</label>
+                  <select
+                    value={newSubjectDifficulty}
+                    onChange={(e) => setNewSubjectDifficulty(Number(e.target.value))}
+                    className="rounded-lg border border-surface-300 px-2 py-2 text-sm text-surface-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                  >
+                    {DIFFICULTY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={handleAddSubject}
+                  disabled={!newSubjectName.trim()}
+                  className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600 disabled:opacity-50"
+                >
+                  Add
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Check-in Reminder Interval */}

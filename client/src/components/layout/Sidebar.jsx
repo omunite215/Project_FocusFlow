@@ -1,5 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useUIStore } from "../../stores/uiStore";
+import { useSessionStore } from "../../stores/sessionStore";
+import { useProfileStore } from "../../stores/profileStore";
 
 const NAV_LINKS = [
   { to: "/", label: "Home" },
@@ -14,18 +16,26 @@ const NAV_LINKS = [
 export default function Sidebar() {
   const location = useLocation();
   const closeSidebar = useUIStore((s) => s.closeSidebar);
+  const sessionStatus = useSessionStore((s) => s.status);
+  const isOnboarded = useProfileStore((s) => s.isOnboarded);
+
+  const showFocusMusic = isOnboarded && sessionStatus !== "active" && sessionStatus !== "paused";
+
+  const allLinks = showFocusMusic
+    ? [...NAV_LINKS, { to: "/focus-music", label: "Focus Music" }]
+    : NAV_LINKS;
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-surface-900/20 backdrop-blur-sm sm:hidden"
+        className="fixed inset-0 z-40 bg-surface-900/20 backdrop-blur-sm md:hidden"
         onClick={closeSidebar}
         aria-hidden="true"
       />
 
       {/* Panel */}
-      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg sm:hidden">
+      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg md:hidden">
         <div className="flex h-14 items-center border-b border-surface-200 px-4">
           <span className="text-lg font-semibold text-primary-600">FocusFlow</span>
           <button
@@ -41,7 +51,7 @@ export default function Sidebar() {
 
         <nav className="p-4">
           <ul className="space-y-1">
-            {NAV_LINKS.map(({ to, label }) => {
+            {allLinks.map(({ to, label }) => {
               const isActive = location.pathname === to;
               return (
                 <li key={to}>

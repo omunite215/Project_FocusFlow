@@ -98,21 +98,24 @@ export default function CompletionCelebration({ onFinish }) {
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/40 backdrop-blur-sm"
+      style={{ opacity: 0 }}
     >
       <div
         ref={textRef}
         className="mx-4 max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl"
       >
-        <div className="mb-4 text-5xl">🎉</div>
-        <h2 className="mb-3 text-2xl font-bold text-surface-800">
+        <div style={{ opacity: 0, transform: "translateY(30px) scale(0.9)" }} className="mb-4 text-5xl">🎉</div>
+        <h2 style={{ opacity: 0, transform: "translateY(30px) scale(0.9)" }} className="mb-3 text-2xl font-bold text-surface-800">
           Session Complete!
         </h2>
-        <p className="mb-6 text-sm leading-relaxed text-surface-500">
+        <p style={{ opacity: 0, transform: "translateY(30px) scale(0.9)" }} className="mb-6 text-sm leading-relaxed text-surface-500">
           {getRandomMessage()}
         </p>
-        <Button size="lg" onClick={handleFinish} loading={finishing} className="w-full">
-          See My Report
-        </Button>
+        <div style={{ opacity: 0, transform: "translateY(30px) scale(0.9)" }}>
+          <Button size="lg" onClick={handleFinish} loading={finishing} className="w-full">
+            See My Report
+          </Button>
+        </div>
       </div>
     </div>
   );

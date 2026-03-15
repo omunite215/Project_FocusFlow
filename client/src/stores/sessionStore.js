@@ -23,6 +23,7 @@ export const useSessionStore = create((set, get) => ({
       status: "active",
       currentBlock: 0,
       completedBlocks: [],
+      completedSubjects: [],  // clear previous session's completed subjects
       checkIns: [],
       elapsedSeconds: 0,
       checkInIntervalSec: state.checkInIntervalSec, // preserve user's chosen interval

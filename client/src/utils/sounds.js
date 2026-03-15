@@ -53,7 +53,7 @@ export function speakCelebration(message) {
     // Cancel any in-progress speech
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(message);
+    const utterance = new window.SpeechSynthesisUtterance(message);
     utterance.rate = 1.05;   // slightly energetic
     utterance.pitch = 1.2;   // warm, upbeat tone
     utterance.volume = 0.8;  // soft, not jarring
@@ -109,15 +109,30 @@ export function playAlertChime() {
   }
 }
 
+const PRESENCE_LINES = [
+  "Hey! Are you still there? Time for a quick check-in.",
+  "Quick check! How's your focus right now?",
+  "Still going strong? Let me know how you're feeling.",
+  "Heads up! It's check-in time. Are you still with me?",
+  "Hey there! Just checking in. How's the study going?",
+  "Pause for a second. How focused are you right now?",
+  "Time check! Let's see how your brain is doing.",
+  "Hey, you still awake? Give me a quick focus rating!",
+  "Focus check! Take a breath and rate how you're feeling.",
+  "Ding ding! Quick presence check. You've got this!",
+];
+
 /**
- * Speaks "Are you there?" for presence check popups.
+ * Speaks a random presence-check line via TTS.
+ * Rotates through multiple voice lines so it never feels repetitive.
  */
 export function speakPresenceCheck() {
   try {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance("Hey! Are you still there? Time for a quick check-in.");
+    const line = PRESENCE_LINES[Math.floor(Math.random() * PRESENCE_LINES.length)];
+    const utterance = new window.SpeechSynthesisUtterance(line);
     utterance.rate = 1.0;
     utterance.pitch = 1.15;
     utterance.volume = 0.85;

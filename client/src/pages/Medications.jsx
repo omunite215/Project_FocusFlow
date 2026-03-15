@@ -5,7 +5,7 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Skeleton from "../components/ui/Skeleton";
 
-const QUICK_SEARCHES = ["Adderall XR", "Concerta", "Vyvanse"];
+const QUICK_SEARCHES = ["Adderall XR", "Concerta", "Vyvanse", "Ritalin", "Strattera", "Focalin"];
 
 export default function Medications() {
   const [query, setQuery] = useState("");

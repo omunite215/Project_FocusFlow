@@ -38,7 +38,6 @@ export function useTimer() {
       }
     };
     // Only re-run when status changes — NOT when elapsedSeconds changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, setElapsed]);
 
   const formatTime = useCallback((totalSeconds) => {

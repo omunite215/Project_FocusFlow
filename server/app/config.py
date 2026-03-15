@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     # Embedding model
     embedding_model: str = "all-MiniLM-L6-v2"
 
-    # CORS
-    cors_origins: str = "http://localhost:5173,http://localhost:5174,http://localhost:5175"
+    # CORS (add your Vercel URL here after first deploy)
+    cors_origins: str = "http://localhost:5173,http://localhost:5174,http://localhost:5175,https://focusflow.vercel.app,https://project-focusflow.vercel.app"
 
     # Environment
     env: str = "development"

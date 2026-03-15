@@ -9,6 +9,7 @@ const Report = lazy(() => import("./pages/Report"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Medications = lazy(() => import("./pages/Medications"));
 const ProfileEdit = lazy(() => import("./pages/ProfileEdit"));
+const FocusMusic = lazy(() => import("./pages/FocusMusic"));
 
 import PageWrapper from "./components/layout/PageWrapper";
 
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
       { path: "/dashboard", element: <SuspenseWrapper><Dashboard /></SuspenseWrapper> },
       { path: "/medications", element: <SuspenseWrapper><Medications /></SuspenseWrapper> },
       { path: "/profile", element: <SuspenseWrapper><ProfileEdit /></SuspenseWrapper> },
+      { path: "/focus-music", element: <SuspenseWrapper><FocusMusic /></SuspenseWrapper> },
     ],
   },
   { path: "*", element: <Navigate to="/" replace /> },
