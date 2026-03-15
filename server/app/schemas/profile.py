@@ -20,15 +20,25 @@ class CourseItem(BaseModel):
 
 class ProfileCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    adhd_type: Optional[str] = Field(
-        None, pattern=r"^(inattentive|hyperactive|combined|none)$"
-    )
+    adhd_type: Optional[str] = None
     medications: list[MedicationItem] = Field(default_factory=list)
     courses: list[CourseItem] = Field(default_factory=list)
     preferred_study_times: list[str] = Field(default_factory=list)
-    energy_pattern: Optional[str] = Field(
-        None, pattern=r"^(morning|afternoon|evening)$"
-    )
+    energy_pattern: Optional[str] = None
+
+    @field_validator("adhd_type", mode="before")
+    @classmethod
+    def empty_adhd_to_none(cls, v):
+        if v == "":
+            return None
+        return v
+
+    @field_validator("energy_pattern", mode="before")
+    @classmethod
+    def empty_energy_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
     @field_validator("preferred_study_times")
     @classmethod
@@ -42,15 +52,25 @@ class ProfileCreate(BaseModel):
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
-    adhd_type: Optional[str] = Field(
-        None, pattern=r"^(inattentive|hyperactive|combined|none)$"
-    )
+    adhd_type: Optional[str] = None
     medications: Optional[list[MedicationItem]] = None
     courses: Optional[list[CourseItem]] = None
     preferred_study_times: Optional[list[str]] = None
-    energy_pattern: Optional[str] = Field(
-        None, pattern=r"^(morning|afternoon|evening)$"
-    )
+    energy_pattern: Optional[str] = None
+
+    @field_validator("adhd_type", mode="before")
+    @classmethod
+    def empty_adhd_to_none(cls, v):
+        if v == "":
+            return None
+        return v
+
+    @field_validator("energy_pattern", mode="before")
+    @classmethod
+    def empty_energy_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
 
 class ProfileResponse(BaseModel):
