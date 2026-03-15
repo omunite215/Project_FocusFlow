@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite+aiosqlite:///./focusflow.db"
 
-    # CORS (add your Vercel URL here after first deploy)
-    cors_origins: str = "http://localhost:5173,http://localhost:5174,http://localhost:5175,https://focusflow.vercel.app,https://project-focusflow.vercel.app"
+    # CORS
+    cors_origins: str = "http://localhost:5173,http://localhost:5174,http://localhost:5175,https://focusflow-frontend.netlify.app,https://focusflow.vercel.app,https://project-focusflow.vercel.app"
 
     # Environment
     env: str = "development"
