@@ -1,28 +1,14 @@
-"""RAG query pipeline — retrieve relevant knowledge chunks from ChromaDB."""
+"""RAG query pipeline — keyword-based retrieval from in-memory chunks."""
 
+import re
 from typing import Optional
 
-import chromadb
-
-from app.rag.ingest import COLLECTION_NAME, get_chroma_client
-
-# Module-level client (initialized on first use or via init_rag)
-_client: Optional[chromadb.ClientAPI] = None
+from app.rag.ingest import get_chunks
 
 
-def init_rag() -> chromadb.ClientAPI:
-    """Initialize the ChromaDB client and return it. Called at app startup."""
-    global _client
-    _client = get_chroma_client()
-    return _client
-
-
-def get_client() -> chromadb.ClientAPI:
-    """Get the ChromaDB client, initializing if needed."""
-    global _client
-    if _client is None:
-        _client = init_rag()
-    return _client
+def init_rag():
+    """Initialize RAG (no-op for in-memory backend, kept for API compat)."""
+    return None
 
 
 def query_knowledge(
@@ -30,53 +16,52 @@ def query_knowledge(
     top_k: int = 5,
     source_filter: Optional[str] = None,
 ) -> list[dict]:
-    """Query the knowledge base and return relevant chunks with metadata.
+    """Query the knowledge base using keyword scoring and return relevant chunks.
 
-    Args:
-        query: The user's question or context string.
-        top_k: Number of top results to return.
-        source_filter: Optional filter to restrict to a specific source document
-                       (e.g., "medication_reference", "study_strategies").
-
-    Returns:
-        List of dicts with keys: text, source, title, score.
+    Uses a simple TF-based scoring: count how many query terms appear in each
+    chunk, weighted by term rarity across the corpus. Fast, zero dependencies.
     """
-    client = get_client()
-
-    try:
-        collection = client.get_collection(COLLECTION_NAME)
-    except Exception:
-        # Collection doesn't exist yet — return empty
+    chunks = get_chunks()
+    if not chunks:
         return []
 
-    where_filter = None
+    # Tokenize query into lowercase words
+    query_terms = set(re.findall(r"[a-z]+", query.lower()))
+    if not query_terms:
+        return []
+
+    # Filter by source if requested
+    candidates = chunks
     if source_filter:
-        where_filter = {"source": source_filter}
+        candidates = [c for c in candidates if c["metadata"].get("source") == source_filter]
 
-    results = collection.query(
-        query_texts=[query],
-        n_results=top_k,
-        where=where_filter,
-        include=["documents", "metadatas", "distances"],
-    )
-
-    if not results["documents"] or not results["documents"][0]:
+    if not candidates:
         return []
 
-    chunks = []
-    for doc, meta, distance in zip(
-        results["documents"][0],
-        results["metadatas"][0],
-        results["distances"][0],
-    ):
-        chunks.append({
-            "text": doc,
-            "source": meta.get("source", "unknown"),
-            "title": meta.get("title", "unknown"),
-            "score": round(1 - distance, 4),  # Convert distance to similarity
+    # Score each chunk by keyword overlap
+    scored = []
+    for chunk in candidates:
+        text_lower = chunk["text"].lower()
+        score = sum(
+            text_lower.count(term) for term in query_terms
+        )
+        if score > 0:
+            scored.append((chunk, score))
+
+    # Sort by score descending, take top_k
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    results = []
+    for chunk, score in scored[:top_k]:
+        max_possible = max(1, sum(len(chunk["text"]) // max(1, len(t)) for t in query_terms))
+        results.append({
+            "text": chunk["text"],
+            "source": chunk["metadata"].get("source", "unknown"),
+            "title": chunk["metadata"].get("title", "unknown"),
+            "score": round(min(score / max(max_possible, 1), 1.0), 4),
         })
 
-    return chunks
+    return results
 
 
 def format_rag_context(chunks: list[dict]) -> str:

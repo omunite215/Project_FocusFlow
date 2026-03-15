@@ -1,12 +1,6 @@
-"""RAG knowledge base ingestion — loads markdown documents into ChromaDB."""
+"""RAG knowledge base ingestion — loads markdown documents into memory."""
 
-import os
 from pathlib import Path
-
-import chromadb
-from chromadb.config import Settings as ChromaSettings
-
-from app.config import settings
 
 KNOWLEDGE_DIR = Path(__file__).parent / "knowledge"
 COLLECTION_NAME = "focusflow_knowledge"
@@ -14,6 +8,9 @@ COLLECTION_NAME = "focusflow_knowledge"
 # Chunk configuration
 CHUNK_SIZE = 500  # characters
 CHUNK_OVERLAP = 100  # characters
+
+# In-memory store: list of {"id", "text", "metadata"}
+_chunks: list[dict] = []
 
 
 def _chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
@@ -32,7 +29,6 @@ def _chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OV
         else:
             if current_chunk:
                 chunks.append(current_chunk.strip())
-            # If a single paragraph exceeds chunk_size, split it by sentences
             if len(para) > chunk_size:
                 sentences = para.replace(". ", ".\n").split("\n")
                 current_chunk = ""
@@ -61,9 +57,8 @@ def _load_documents() -> list[dict]:
             continue
 
         content = md_file.read_text(encoding="utf-8")
-        source = md_file.stem  # e.g., "adhd_cognitive_science"
+        source = md_file.stem
 
-        # Extract title from first line if it's a heading
         lines = content.split("\n")
         title = lines[0].lstrip("# ").strip() if lines and lines[0].startswith("#") else source
 
@@ -83,49 +78,27 @@ def _load_documents() -> list[dict]:
     return documents
 
 
-def get_chroma_client() -> chromadb.ClientAPI:
-    """Create a ChromaDB persistent client."""
-    persist_dir = settings.chroma_persist_dir
-    os.makedirs(persist_dir, exist_ok=True)
-    return chromadb.PersistentClient(
-        path=persist_dir,
-        settings=ChromaSettings(anonymized_telemetry=False),
-    )
+def get_chunks() -> list[dict]:
+    """Return the in-memory chunk store."""
+    return _chunks
 
 
-def ingest_knowledge_base(client: chromadb.ClientAPI | None = None) -> int:
-    """Ingest all knowledge base documents into ChromaDB.
+def ingest_knowledge_base(client=None) -> int:
+    """Load all knowledge base documents into memory.
 
+    The client parameter is accepted for backwards compatibility but ignored.
     Returns the number of documents ingested.
     """
-    if client is None:
-        client = get_chroma_client()
+    global _chunks
+    _chunks = _load_documents()
 
-    # Delete existing collection to re-ingest fresh
-    try:
-        client.delete_collection(COLLECTION_NAME)
-    except Exception:
-        pass  # Collection doesn't exist yet
-
-    collection = client.get_or_create_collection(
-        name=COLLECTION_NAME,
-        metadata={"hnsw:space": "cosine"},
-    )
-
-    documents = _load_documents()
-    if not documents:
+    if not _chunks:
         print("No knowledge base documents found to ingest.")
         return 0
 
-    # Batch add to ChromaDB (it handles embedding via default model)
-    collection.add(
-        ids=[d["id"] for d in documents],
-        documents=[d["text"] for d in documents],
-        metadatas=[d["metadata"] for d in documents],
-    )
-
-    print(f"Ingested {len(documents)} chunks from {len(set(d['metadata']['source'] for d in documents))} documents")
-    return len(documents)
+    sources = set(d["metadata"]["source"] for d in _chunks)
+    print(f"Ingested {len(_chunks)} chunks from {len(sources)} documents (in-memory)")
+    return len(_chunks)
 
 
 if __name__ == "__main__":

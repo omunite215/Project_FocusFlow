@@ -19,10 +19,10 @@ async def lifespan(app: FastAPI):
     await init_db()
     print("[OK] Database initialized")
 
-    # Startup: initialize RAG pipeline and ingest knowledge base
-    client = init_rag()
-    ingest_knowledge_base(client)
-    print("[OK] RAG pipeline initialized")
+    # Startup: load knowledge base into memory
+    init_rag()
+    ingest_knowledge_base()
+    print("[OK] RAG knowledge base loaded")
 
     yield
     # Shutdown: cleanup if needed

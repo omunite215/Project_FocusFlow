@@ -16,12 +16,6 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite+aiosqlite:///./focusflow.db"
 
-    # ChromaDB
-    chroma_persist_dir: str = "./chroma_data"
-
-    # Embedding model
-    embedding_model: str = "all-MiniLM-L6-v2"
-
     # CORS (add your Vercel URL here after first deploy)
     cors_origins: str = "http://localhost:5173,http://localhost:5174,http://localhost:5175,https://focusflow.vercel.app,https://project-focusflow.vercel.app"
 
